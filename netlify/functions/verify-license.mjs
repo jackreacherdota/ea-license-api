@@ -12,23 +12,14 @@ function jsonResponse(data, status = 200) {
 }
 
 function getDb() {
-  const projectId = process.env.FIREBASE_PROJECT_ID;
-  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-  const privateKeyRaw = process.env.FIREBASE_PRIVATE_KEY;
+  const base64 = process.env.FIREBASE_SERVICE_ACCOUNT_BASE64;
 
-  if (!projectId) {
-    throw new Error("FIREBASE_PROJECT_ID is missing");
+  if (!base64) {
+    throw new Error("FIREBASE_SERVICE_ACCOUNT_BASE64 is missing");
   }
 
-  if (!clientEmail) {
-    throw new Error("FIREBASE_CLIENT_EMAIL is missing");
-  }
-
-  if (!privateKeyRaw) {
-    throw new Error("FIREBASE_PRIVATE_KEY is missing");
-  }
-
-  const privateKey = privateKeyRaw.replace(/\\n/g, "\n");
+  const jsonText = Buffer.from(base64, "base64").toString("utf8");
+  const serviceAccount = JSON.parse(jsonText);
 
   let app;
 
@@ -36,11 +27,7 @@ function getDb() {
     app = getApps()[0];
   } else {
     app = initializeApp({
-      credential: cert({
-        projectId,
-        clientEmail,
-        privateKey
-      })
+      credential: cert(serviceAccount)
     });
   }
 
