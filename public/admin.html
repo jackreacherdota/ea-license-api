@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>TommyStrats ApexIQ — License Admin</title>
+  <link rel="stylesheet" href="/admin.css" />
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar hero-card">
+      <div class="hero-copy">
+        <div class="brand-line">
+          <span class="brand-dot"></span>
+          <p class="eyebrow">TOMMYSTRATS • APEXIQ CONTROL CENTER</p>
+        </div>
+        <h1>ApexIQ License Command Center</h1>
+        <p class="muted hero-subtitle">Securely generate, monitor, revoke and extend EA licenses from one control panel.</p>
+        <div class="hero-badges">
+          <span class="mini-badge">Netlify Secure API</span>
+          <span class="mini-badge">Firebase Firestore</span>
+          <span class="mini-badge">XAUUSD Customer Build</span>
+        </div>
+      </div>
+
+      <div class="hero-actions">
+        <div class="system-pill">
+          <span class="pulse-dot"></span>
+          <span>License Server Online</span>
+        </div>
+        <button id="refreshBtn" class="button primary glow-button">Refresh Dashboard</button>
+      </div>
+    </header>
+
+    <section class="card auth-card glass-card">
+      <div>
+        <h2>Admin access</h2>
+        <p class="muted">Enter the Netlify <code>EA_ADMIN_SECRET</code>. It is used only for this browser session.</p>
+      </div>
+
+      <div class="auth-row">
+        <input id="adminSecret" type="password" autocomplete="off" placeholder="EA_ADMIN_SECRET" />
+        <button id="toggleSecretBtn" class="button secondary" type="button">Show</button>
+      </div>
+    </section>
+
+    <section class="grid two">
+      <section class="card glass-card form-card">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">NEW LICENSE</p>
+            <h2>Generate ApexIQ key</h2>
+          </div>
+        </div>
+
+        <form id="createForm" class="form-grid">
+          <label>
+            <span>Customer</span>
+            <input id="customer" required placeholder="Customer name" />
+          </label>
+
+          <label>
+            <span>MT5 Account</span>
+            <input id="account" required type="number" min="1" step="1" placeholder="285539" />
+          </label>
+
+          <label>
+            <span>Broker Server</span>
+            <input id="server" required placeholder="EGlobalTrade-Demo" />
+          </label>
+
+          <label>
+            <span>Expiry</span>
+            <input id="expiresAt" required type="datetime-local" />
+          </label>
+
+          <label>
+            <span>Product</span>
+            <input id="product" value="ApexIQ" />
+          </label>
+
+          <label>
+            <span>EA Version</span>
+            <input id="latestVersion" value="2.00" />
+          </label>
+
+          <button class="button primary full" type="submit">Generate License</button>
+        </form>
+
+        <div id="createResult" class="result hidden"></div>
+      </section>
+
+      <section class="card glass-card overview-card">
+        <p class="eyebrow">OVERVIEW</p>
+        <h2>License status</h2>
+
+        <div class="stats">
+          <article>
+            <span class="stat-label">Total</span>
+            <strong id="statTotal">0</strong>
+          </article>
+          <article>
+            <span class="stat-label">Active</span>
+            <strong id="statActive">0</strong>
+          </article>
+          <article>
+            <span class="stat-label">Revoked</span>
+            <strong id="statRevoked">0</strong>
+          </article>
+          <article>
+            <span class="stat-label">Expired</span>
+            <strong id="statExpired">0</strong>
+          </article>
+        </div>
+
+        <div class="tip">
+          <strong>Customer build:</strong>
+          ApexIQ validates the license against your Netlify backend and Firestore.
+        </div>
+      </section>
+    </section>
+
+    <section class="card glass-card licenses-card">
+      <div class="license-toolbar">
+        <div>
+          <p class="eyebrow">CUSTOMERS</p>
+          <h2>License manager</h2>
+        </div>
+
+        <div class="search-wrap">
+          <input id="searchInput" placeholder="Search key, customer, account or server…" />
+        </div>
+      </div>
+
+      <div id="statusMessage" class="status-message">Enter your admin secret, then press Refresh.</div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>License</th>
+              <th>Customer</th>
+              <th>Account</th>
+              <th>Server</th>
+              <th>Expires</th>
+              <th>Status</th>
+              <th>Version</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="licenseRows"></tbody>
+        </table>
+      </div>
+    </section>
+    <footer class="footer-note">
+      <span>TommyStrats ApexIQ</span>
+      <span class="footer-sep">•</span>
+      <span>Secure License Infrastructure</span>
+    </footer>
+  </main>
+
+  <dialog id="editDialog">
+    <form id="editForm" method="dialog">
+      <div class="dialog-heading">
+        <div>
+          <p class="eyebrow">EDIT LICENSE</p>
+          <h2 id="editLicenseTitle">License</h2>
+        </div>
+        <button id="closeDialogBtn" class="icon-button" type="button">×</button>
+      </div>
+
+      <input id="editLicenseKey" type="hidden" />
+
+      <label>
+        <span>Customer</span>
+        <input id="editCustomer" required />
+      </label>
+
+      <label>
+        <span>MT5 Account</span>
+        <input id="editAccount" required type="number" min="1" step="1" />
+      </label>
+
+      <label>
+        <span>Broker Server</span>
+        <input id="editServer" required />
+      </label>
+
+      <label>
+        <span>Expiry</span>
+        <input id="editExpiresAt" required type="datetime-local" />
+      </label>
+
+      <label>
+        <span>Version</span>
+        <input id="editVersion" />
+      </label>
+
+      <div class="dialog-actions">
+        <button id="cancelEditBtn" class="button secondary" type="button">Cancel</button>
+        <button class="button primary" type="submit">Save Changes</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="/admin.js"></script>
+</body>
+</html>
