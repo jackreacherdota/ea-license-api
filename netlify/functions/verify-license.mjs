@@ -1,31 +1,6 @@
 import { initializeApp, cert, getApps } from "firebase-admin/app";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 
-function getFirebaseApp() {
-  if (getApps().length > 0) {
-    return getApps()[0];
-  }
-
-  const projectId = process.env.FIREBASE_PROJECT_ID;
-  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-  const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n");
-
-  if (!projectId || !clientEmail || !privateKey) {
-    throw new Error("Missing Firebase environment variables.");
-  }
-
-  return initializeApp({
-    credential: cert({
-      projectId,
-      clientEmail,
-      privateKey
-    })
-  });
-}
-
-const app = getFirebaseApp();
-const db = getFirestore(app);
-
 function jsonResponse(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
@@ -34,6 +9,42 @@ function jsonResponse(data, status = 200) {
       "Cache-Control": "no-store"
     }
   });
+}
+
+function getDb() {
+  const projectId = process.env.FIREBASE_PROJECT_ID;
+  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+  const privateKeyRaw = process.env.FIREBASE_PRIVATE_KEY;
+
+  if (!projectId) {
+    throw new Error("FIREBASE_PROJECT_ID is missing");
+  }
+
+  if (!clientEmail) {
+    throw new Error("FIREBASE_CLIENT_EMAIL is missing");
+  }
+
+  if (!privateKeyRaw) {
+    throw new Error("FIREBASE_PRIVATE_KEY is missing");
+  }
+
+  const privateKey = privateKeyRaw.replace(/\\n/g, "\n");
+
+  let app;
+
+  if (getApps().length > 0) {
+    app = getApps()[0];
+  } else {
+    app = initializeApp({
+      credential: cert({
+        projectId,
+        clientEmail,
+        privateKey
+      })
+    });
+  }
+
+  return getFirestore(app);
 }
 
 export default async (request) => {
@@ -47,6 +58,8 @@ export default async (request) => {
         405
       );
     }
+
+    const db = getDb();
 
     let body;
 
@@ -139,16 +152,12 @@ export default async (request) => {
       }
     }
 
-    try {
-      await licenseRef.update({
-        lastSeen: FieldValue.serverTimestamp(),
-        lastAccount: account,
-        lastServer: server,
-        lastVersion: version
-      });
-    } catch (updateError) {
-      console.error("Could not update lastSeen:", updateError);
-    }
+    await licenseRef.update({
+      lastSeen: FieldValue.serverTimestamp(),
+      lastAccount: account,
+      lastServer: server,
+      lastVersion: version
+    });
 
     return jsonResponse({
       authorized: true,
@@ -159,12 +168,13 @@ export default async (request) => {
       serverTime: new Date().toISOString()
     });
   } catch (error) {
-    console.error("License verification error:", error);
+    console.error("VERIFY LICENSE ERROR:", error);
 
     return jsonResponse(
       {
         authorized: false,
-        reason: "SERVER_ERROR"
+        reason: "SERVER_ERROR",
+        message: error.message
       },
       500
     );
