@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>ApexIQ License Admin</title>
+</head>
+
+<body>
+
+<h1>ApexIQ License Generator</h1>
+
+<label>Customer</label><br>
+<input id="customer"><br><br>
+
+<label>MT5 Account</label><br>
+<input id="account" type="number"><br><br>
+
+<label>Server</label><br>
+<input id="server"><br><br>
+
+<label>Expiry</label><br>
+<input id="expiry" type="datetime-local"><br><br>
+
+<label>Admin Secret</label><br>
+<input id="secret" type="password"><br><br>
+
+<button onclick="createLicense()">
+  Generate License
+</button>
+
+<pre id="result"></pre>
+
+<script>
+async function createLicense() {
+
+  const customer =
+    document.getElementById("customer").value;
+
+  const account =
+    Number(
+      document.getElementById("account").value
+    );
+
+  const server =
+    document.getElementById("server").value;
+
+  const expiry =
+    document.getElementById("expiry").value;
+
+  const secret =
+    document.getElementById("secret").value;
+
+  const expiresAt =
+    new Date(expiry).toISOString();
+
+  const response = await fetch(
+    "/.netlify/functions/create-license",
+    {
+      method: "POST",
+
+      headers: {
+        "Content-Type": "application/json",
+        "x-admin-secret": secret
+      },
+
+      body: JSON.stringify({
+        customer,
+        account,
+        server,
+        expiresAt,
+        product: "ApexIQ"
+      })
+    }
+  );
+
+  const data =
+    await response.json();
+
+  if (data.success) {
+    document.getElementById("result").textContent =
+      "License created:\n\n" +
+      data.licenseKey;
+  } else {
+    document.getElementById("result").textContent =
+      "Error: " +
+      (data.reason || "Unknown");
+  }
+}
+</script>
+
+</body>
+</html>
